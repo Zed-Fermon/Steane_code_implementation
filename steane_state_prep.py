@@ -1,4 +1,5 @@
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, QuantumRegister
+from qiskit.circuit import Qubit
 
 
 def main():
@@ -51,24 +52,20 @@ def main():
 
 
 
-def encode_qubit():
+def encode_qubit(q = None):
 
-	encoded_qubit = QuantumCircuit(7, name='encode_logical_qubit')
-	#encoded_qubit.barrier()
+	# q is the base qubit, defaults to |0> state
+	# function returns a 7-qubit gate which rotates a |0>^7 state to the logical q state
 
-	# [0, 1, 3] stay in h
-	encoded_qubit.h(range(7))
+	encoded_qubit = QuantumCircuit(2, name='encode_logical_qubit')
+	if(q is None): q = Qubit()
+	encoded_qubit.add_bits([q, Qubit(), Qubit(), Qubit(), Qubit()])
 
-	# q2 = q0 XOR q1
-	encoded_qubit.cz([0, 1], [2, 2])
-	encoded_qubit.h(2)
-
-	# if q3=1, NOT [q4, q5, q6]
-	encoded_qubit.cz([3, 3, 3], [4, 5, 6])
-	encoded_qubit.h([4, 5, 6])
-
-	# [q4, q5, q6] = +-[q0, q1, q2]
-	encoded_qubit.cx([0, 1, 2], [4, 5, 6])
+	encoded_qubit.cx([2, 2], [4, 5])
+	encoded_qubit.h([0, 1, 3])
+	encoded_qubit.cx([0, 0, 0], [2, 4, 6])
+	encoded_qubit.cx([1, 1, 1], [2, 5, 6])
+	encoded_qubit.cx([3, 3, 3], [4, 5, 6])
 
 	return encoded_qubit.to_gate()
 

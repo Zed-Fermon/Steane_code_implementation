@@ -1,4 +1,4 @@
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, QuantumRegister
 
 
 def steane_x():
@@ -34,9 +34,21 @@ def steane_h():
 
 def steane_cx():
 
-	logCNOT = QuantumCircuit(14, name='logical_CNOT')
+	logCNOT = QuantumCircuit(QuantumRegister(size = 7, name = "control"), 
+		QuantumRegister(size = 7, name = "target"), name='logical_CNOT')
 
 	logCNOT.cx(range(7), range(7, 14))
 
 	logCNOT.to_gate()
 	return logCNOT
+
+
+def steane_cz():
+
+	logCZ = QuantumCircuit(QuantumRegister(size = 7, name = "control"), 
+		QuantumRegister(size = 7, name = "target"), name='logical_CZ')
+
+	logCZ.cz(range(7), range(7, 14))
+
+	logCZ.to_gate()
+	return logCZ
