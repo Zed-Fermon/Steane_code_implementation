@@ -6,7 +6,8 @@ def correct_X(qc: QuantumCircuit, logQubit: list, ancQubits: list, ancReadout: A
 
 	qc.barrier()
 	qc.append(parity_check(), logQubit+ancQubits)
-	qc.measure([ancQubits[0], ancQubits[1], ancQubits[2]], [ancQubits[0], ancQubits[1], ancQubits[2]])
+		
+	qc.measure(ancQubits, ancReadout)
 
 	qc.barrier()	
 	with qc.if_test((ancReadout, 1)):
@@ -24,7 +25,7 @@ def correct_X(qc: QuantumCircuit, logQubit: list, ancQubits: list, ancReadout: A
 	with qc.if_test((ancReadout, 7)):
 		qc.x(3)
 
-	return qc
+	return qc.to_instruction(label = 'decode')
 
 
 

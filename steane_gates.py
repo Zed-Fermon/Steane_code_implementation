@@ -1,6 +1,10 @@
 from qiskit import QuantumCircuit, QuantumRegister
 
 
+def get_steane_op(op: str):
+	return gate_map[op]
+
+
 def steane_x():
 
 	logX = QuantumCircuit(7, name='logical_X')
@@ -52,3 +56,12 @@ def steane_cz():
 
 	logCZ.to_gate()
 	return logCZ
+
+
+gate_map = {
+	'x': steane_x(),
+	'z': steane_z(),
+	'h': steane_h(),
+	'cx': steane_cx(),
+	'cz': steane_cz()
+}

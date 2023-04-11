@@ -8,6 +8,8 @@ from steane_gates import steane_x, steane_z, steane_h, steane_cx, steane_cz
 from steane_parity_checks import correct_X, correct_Z, correct_errors
 from basic_noise_model import apply_random_error
 
+from EncodedCircuit import EncodedCircuit
+
 
 
 #list of basis vectors; first row*1/sqrt(8) is |0> basis, second row is |1> basis
@@ -17,29 +19,39 @@ basis_vecs = [
 
 
 def main():
-	for i in range(7):
 
-		(qc, regs) = define_encoded_circuit(num_qubits = 1)
+	qc = QuantumCircuit(2, 1)
+	qc.x(0)
+	qc.z(0)
+	qc.h(0)
+	qc.cx(0, 1)
 
+	enc_qc = EncodedCircuit(qc)
+	print(enc_qc.draw())
+
+
+	#for i in range(1):
+
+	#	(qc, regs) = define_encoded_circuit(num_qubits = 1)
 
 		#apply_random_error(qc)
-		qc.append(steane_h(), log_qubit(0))
-		qc.h(i)
+	#	qc.append(steane_h(), log_qubit(0))
+		#qc.h(i)
 
-		correct_errors(qc, log_qubit(0), anc_qubits(0), regs['ancilla_readouts'][0])
+	#	correct_errors(qc, log_qubit(0), anc_qubits(0), regs['ancilla_readouts'][0])
 		
-		measure_log_qubits(qc, regs)
+	#	measure_log_qubits(qc, regs)
 
-		run_circuit(qc)
+	#	run_circuit(qc)
 
-	qc.clear()
+	#qc.clear()
 
 
 
 
 def run_circuit(qc: QuantumCircuit):
 
-	#print(qc.draw())
+	print(qc.draw())
 
 	# Use Aer's qasm_simulator
 	backend_sim = Aer.get_backend('aer_simulator')
