@@ -57,7 +57,7 @@ def encode_qubit(q = None):
 	# q is the base qubit, defaults to |0> state
 	# function returns a 7-qubit gate which rotates a |0>^7 state to the logical q state
 
-	encoded_qubit = QuantumCircuit(2, name='encode_logical_qubit')
+	encoded_qubit = QuantumCircuit(2, name='Encode qubit')
 	if(q is None): q = Qubit()
 	encoded_qubit.add_bits([q, Qubit(), Qubit(), Qubit(), Qubit()])
 
@@ -83,7 +83,7 @@ def reverse_encoding():
 # even cx(even)					odd cx(even)
 #===========================================================
 
-	rev = QuantumCircuit(7, name='reverse_logical_encoding')
+	rev = QuantumCircuit(7, name='Reverse encoding')
 
 	# 0 basis [q0, q1, q1] = [q4, q5, q6], 1 basis [q0, q1, q2] = -1*[q4, q5, q6]
 	# Removes any entanglement w q3

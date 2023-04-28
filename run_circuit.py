@@ -1,60 +1,57 @@
 from qiskit import QuantumCircuit, Aer, transpile, QuantumRegister, ClassicalRegister, AncillaRegister
 from qiskit_aer import AerSimulator
+from qiskit_aer.noise import NoiseModel
 
 import random
+import re
 
-from steane_state_prep import encode_qubit, reverse_encoding
-from steane_gates import steane_x, steane_z, steane_h, steane_cx, steane_cz
-from steane_parity_checks import correct_X, correct_Z, correct_errors
-from basic_noise_model import apply_random_error
+from basic_noise_model import apply_random_error, get_noise_model
 
 from EncodedCircuit import EncodedCircuit
 
 
 
 #list of basis vectors; first row*1/sqrt(8) is |0> basis, second row is |1> basis
-basis_vecs = [
-'0000000', '0110011', '1010101', '1100110', '0001111', '0111100', '1011010', '1101001',
-'1111111', '1001100', '0101010', '0011001', '1110000', '1000011', '0100101', '0010110']
+#basis_vecs = [
+#'0000000', '0110011', '1010101', '1100110', '0001111', '0111100', '1011010', '1101001',
+#'1111111', '1001100', '0101010', '0011001', '1110000', '1000011', '0100101', '0010110']
 
 
 def main():
 
-	qc = QuantumCircuit(2, 1)
+	nm = get_noise_model(.001, .0001)
+
+	num_qb = 2
+
+	qc = QuantumCircuit(num_qb, num_qb)
 	qc.x(0)
-	qc.z(0)
-	qc.h(0)
 	qc.cx(0, 1)
+	qc.h(0)
+	qc.z(0)
+
+	for tmp in range(100):
+		qc.z(0)
+		qc.x(1)
+	qc.measure(range(num_qb), range(num_qb))
+
+	faulty_counts = run_circuit(qc, nm)
+	print_counts(faulty_counts)
+
 
 	enc_qc = EncodedCircuit(qc)
-	print(enc_qc.draw())
-
-
-	#for i in range(1):
-
-	#	(qc, regs) = define_encoded_circuit(num_qubits = 1)
-
-		#apply_random_error(qc)
-	#	qc.append(steane_h(), log_qubit(0))
-		#qc.h(i)
-
-	#	correct_errors(qc, log_qubit(0), anc_qubits(0), regs['ancilla_readouts'][0])
-		
-	#	measure_log_qubits(qc, regs)
-
-	#	run_circuit(qc)
-
-	#qc.clear()
+	enc_counts = run_circuit(enc_qc.get_circuit(), nm)
+	print_encoded_counts(enc_counts, num_qb)
 
 
 
+def run_circuit(qc: QuantumCircuit, nm: NoiseModel = None):
 
-def run_circuit(qc: QuantumCircuit):
+	#print(qc.draw())
 
-	print(qc.draw())
+	if(nm is None): nm = get_noise_model(0, 0)
 
-	# Use Aer's qasm_simulator
-	backend_sim = Aer.get_backend('aer_simulator')
+	# Use Aer's built-in simulator
+	backend_sim = AerSimulator(noise_model = nm)
 
 	# Execute the circuit on the aer simulator.
 	
@@ -66,85 +63,70 @@ def run_circuit(qc: QuantumCircuit):
 	result_sim = job_sim.result()
 
 	counts = result_sim.get_counts(qc)
-	print("Vector  Anc ", " Count ", "Percent")
 
-	for bVec in basis_vecs:
-		if(bVec in str(counts.keys())):
-			#print(bVec+": ", str(counts[bVec])+"  ", counts[bVec]/num_shots)
-			#counts.pop(bVec)
-			continue
-
-	for x in counts.keys():
-		print(str(x[::-1])+": ", str(counts[x])+"  ", counts[x]/num_shots)
-
-
-def log_qubit(*qubs: int):
-	# Returns a list representing the q'th logical qubit
-	temp = list()
-	for q in qubs:
-		temp = temp+list(range(q*10, (q*10)+7))
-	return temp
-
-
-def anc_qubits(*qubs: int):
-	# Returns a list representing the ancilla qubits of the q'th logical qubit
-	temp = list()
-	for q in qubs:
-		temp = temp+list(range((q*10)+7, (q+1)*10))
-	return temp
+	return counts
 
 
 
-def define_encoded_circuit(num_qubits: int):
-	# Generates an encoded QuantumCircuit and lists of registers for code implementation
+def print_encoded_counts(counts, num_qubits):
+
+	num_shots = counts.shots()
+	num_successful = 0
+
+	success_check = re.compile('(0{3} (0{7}|1{7}) *){'+f'{num_qubits}'+'}')
+	success_items = list()
+
+	for bitStr in counts.keys():
+		# Check if bitstring is in codespace
+		bS_check = re.fullmatch(success_check, bitStr)
+
+		# Get all results without errors
+		if(bS_check is not None):
+			# Count successfull runs to determine circuit success rate
+			num_successful += counts.get(bitStr)
+
+			# Clean bitstring by removing ancillas and collapsing logical qubits
+			clean_bitStr = bitStr.replace('0000000', '0')
+			clean_bitStr = clean_bitStr.replace('1111111', '1')
+			clean_bitStr = clean_bitStr.replace('000', '')
+			clean_bitStr = clean_bitStr.replace(' ', '')
+			clean_bitStr = clean_bitStr[::-1]
+
+
+			success_items.append((bitStr, counts.get(bitStr), clean_bitStr))
+
+	get_item_count = lambda item: item[1]
+	success_items.sort(key = get_item_count, )
+	perc_succ = num_successful / num_shots
+	print("Percent successful runs:", perc_succ)
+	print()
+
+	for succ_item in success_items:
+		print(succ_item[2]+": "+str(succ_item[1]))
+
+
 	
-	#list storing size-7 quantum registers, each holding 1 logical qubit
-	log_qubits = list()
 
-	#list of classical registers corresponding to logical qubits
-	log_readouts = list()
+	
 
-	#list of quantum ancilla registers (used for parity checks)
-	ancilla_qubits = list()
+def print_counts(counts):
 
-	#list of classical registers to read ancilla measurements
-	ancilla_readouts = list()
+	num_shots = counts.shots()
 
-	qc = QuantumCircuit()
-	for qub in range(num_qubits):
+	for _ in range(len(counts.keys())):
+		# Get the most frequent results (which should be all 0 or all 1) and prints 
+		# them first
+		# Ties result in an error, and they always happen for low counts, so if an 
+		# error occurs I just use the key iterable as the default value
+		try:
+			mostFreq = counts.most_frequent()
+		except:
+			continue
+		freq = counts.pop(mostFreq)
+		perc = freq/num_shots
 
-		# add registers to quantum circuit
-		log_qubits.append(QuantumRegister(size = 7, name = "Logical "+str(qub)))
-		log_readouts.append(ClassicalRegister(size = 7, name = "Logical "+str(qub)+" readout"))
-		ancilla_qubits.append(AncillaRegister(size = 3, name = "Log "+str(qub)+" ancillas"))
-		ancilla_readouts.append(ClassicalRegister(size = 3, name = "Log "+str(qub)+" anc readout"))
-		
-		qc.add_register(log_qubits[qub])
-		qc.add_register(log_readouts[qub])
-		qc.add_register(ancilla_qubits[qub])
-		qc.add_register(ancilla_readouts[qub])
-
-		qc.append(encode_qubit(), log_qubit(qub))
-
-	qc.barrier()
-
-	regs = {
-		'log_qubits': log_qubits,
-		'log_readouts': log_readouts,
-		'ancilla_qubits': ancilla_qubits,
-		'ancilla_readouts': ancilla_readouts
-	}
-
-	return (qc, regs)
-
-
-def measure_log_qubits(qc: QuantumCircuit, regs: list):
-
-	for (i, log_qubit) in enumerate(regs['log_qubits']):
-		qc.append(reverse_encoding(), log_qubit)
-		qc.measure(log_qubit, regs['log_readouts'][i])
-
-	return qc
+		print(mostFreq[::-1]+": ", str(freq)+"  ", perc)
+	print()
 
 
 
