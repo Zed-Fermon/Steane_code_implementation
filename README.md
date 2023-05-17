@@ -27,7 +27,7 @@ pip install qiskit
 
 Import EncodedCircuit class with the following import line:
 ```
-from circuit-encoder.EncodedCircuit import EncodedCircuit
+from circuit_encoder.EncodedCircuit import EncodedCircuit
 ```
 
 Then create your QuantumCircuit as normal and pass it into an EncodedCircuit object (For example, this Bell state circuit):
