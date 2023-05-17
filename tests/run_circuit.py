@@ -7,14 +7,7 @@ import re
 
 from basic_noise_model import apply_random_error, get_noise_model
 
-from EncodedCircuit import EncodedCircuit
-
-
-
-#list of basis vectors; first row*1/sqrt(8) is |0> basis, second row is |1> basis
-#basis_vecs = [
-#'0000000', '0110011', '1010101', '1100110', '0001111', '0111100', '1011010', '1101001',
-#'1111111', '1001100', '0101010', '0011001', '1110000', '1000011', '0100101', '0010110']
+from circuit_encoder.EncodedCircuit import EncodedCircuit
 
 
 def main():
