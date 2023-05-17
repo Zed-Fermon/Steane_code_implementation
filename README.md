@@ -15,7 +15,7 @@ in the following articles:
 Use pip to install package. Run the following command, you may need sudo/admin:
 
 ```
-pip install -i https://test.pypi.org/simple/ Steane-code-implementation-Zed-Fermon==0.0.1
+pip install -i https://test.pypi.org/simple/ circuit-encoder
 ```
 
 If you don't already have it installed, qiskit is also required:

@@ -19,7 +19,6 @@ def main():
 	qc = QuantumCircuit(num_qb, num_qb)
 	qc.h(0)
 	qc.cx(0, 1)
-	qc.z(0)
 
 	#for tmp in range(100):
 	#	qc.z(0)
